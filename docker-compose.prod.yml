@@ -1,0 +1,51 @@
+services:
+
+  webserver:
+    build: 
+      context: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      -  users_api
+    networks:
+      - dev_network
+
+  users_api:
+    build:
+      context: ./APIS
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+    expose:
+      - "3000-3001:3000"
+    volumes:
+      - ./APIS/users/:/usr/usersAPI/
+    depends_on:
+      - db
+    networks:
+      - dev_network
+
+  db:
+    image: mysql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 2GB
+        reservations:
+          cpus: "0.1"
+          memory: 1GB
+    volumes:
+      - ./pgdata_prod/users:/var/lib/mysql # Note: changed the path to match MySQL
+    env_file:
+      - ./.env.prod
+networks:
+  dev_network:
+    driver: bridge
